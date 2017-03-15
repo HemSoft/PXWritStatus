@@ -1,0 +1,9 @@
+## Title: PhaeroX Writ Status
+## APIVersion: 100018 100019
+## Description: Lists writ status to a window.
+## Version: 0.0.4
+## Author: |c33BBCCPhaeroX|r
+## SavedVariables: PXWritStatusSavedVariables
+
+PXWritStatus.xml
+PXWritStatus.lua
