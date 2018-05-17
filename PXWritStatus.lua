@@ -1,55 +1,131 @@
--- First, we create a namespace for our addon by declaring a top-level table that will hold everything else.
-PXWritStatusAddon = {}
+PXWritStatusAddon = {
+  Name = "PXWritStatus",
+  Version = "1.0.0",
+  WritStatusText = '',
 
--- This isn't strictly necessary, but we'll use this string later when registering events.
--- Better to define it in a single place rather than retyping the same string.
-PXWritStatusAddon.name = "PXWritStatus"
-PXWritStatusAddon.log = ""
-PXWritStatusAddon.logLines = {}
-PXWritStatusAddon.logLinesToKeep = 8
-PXWritStatusAddon.writNames = {}
+  DefaultSettings = {
+    allWritsDoneNotified = false,
+    debug = true,
+    fontColor = ZO_ColorDef:New("FFFFFF"),
+    fontScale = 1,
+    left = 100,
+    showing = true,
+    showWritStatus = true,
+    showWritStatusCondensed = true,
+    top = 100,
+    transparency = 0,
+  },
+
+  ColorGold   = '|cd8b620',
+  ColorGreen  = '|c28b712',
+  ColorOrange = '|cf7952c',
+  ColorRed    = '|cd61b1b',
+  ColorWhite  = '|cffffff',
+  ColorBlue   = '|c2d64bc',
+}
+
+PXWritStatusAddon.WritStatus = {
+  BlackSmithing = false,
+  BlackSmithingColor = PXWritStatusAddon.ColorRed,
+  BlackSmithingPickedUp = false,
+  Clothing = false,
+  ClothingColor = PXWritStatusAddon.ColorRed,
+  ClothingPickedUp = false,
+  Woodworking = false,
+  WoodworkingColor = PXWritStatusAddon.ColorRed,
+  WoodworkingPickedUp = false,
+  Alchemy = false,
+  AlchemyColor = PXWritStatusAddon.ColorRed,
+  AlchemyPickedUp = false,
+  Enchanting = false,
+  EnchantingColor = PXWritStatusAddon.ColorRed,
+  AlchemyPickedUp = false,
+  Provisioning = false,
+  ProvisioningColor = PXWritStatusAddon.ColorRed,
+  ProvisioningPickedUp = false,
+}
+
+PXWritStatusAddon.savedVariables = PXWritStatusAddon.DefaultSettings
 
 ---------------------------------------------------------------------------------------------------------
 -- E V E N T S
 ---------------------------------------------------------------------------------------------------------
--- Then we create an event handler function which will be called when the "addon loaded" event
--- occurs. We'll use this to initialize our addon after all of its resources are fully loaded.
+function PXWritStatusAddon:Initialize()
+
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_CRAFT_COMPLETED,
+    function(eventCode, craftSkill)
+      PXWritStatusAddon:UpdateWritStatus()
+    end
+  )
+
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_CLOSE_BANK,                      function() PXWritStatusAddon:UpdateWritStatus() end)
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_END_CRAFTING_STATION_INTERACT,   function() PXWritStatusAddon:UpdateWritStatus() end)
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_INVENTORY_FULL_UPDATE,           function() PXWritStatusAddon:UpdateWritStatus() end)
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_ITEM_SLOT_CHANGED,               function() PXWritStatusAddon:UpdateWritStatus() end)
+
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_QUEST_ADDED,                     function() PXWritStatusAddon:UpdateWritStatus() end)
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_QUEST_COMPLETE,                  function() PXWritStatusAddon:UpdateWritStatus() end)
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_SKILL_XP_UPDATE,                 function() PXWritStatusAddon:UpdateWritStatus() end)
+  EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_SMITHING_TRAIT_RESEARCH_STARTED, function() PXWritStatusAddon:UpdateWritStatus() end)
+
+  d('PXWS -- PXWritStatusAddon:Initialize()')
+  self.savedVariables = ZO_SavedVars:New("PXWritStatusSavedVariables", 4, nil, {})
+  self:RestorePosition()
+
+  if self.savedVariables.showing == false then
+    PXWritStatusAddonIndicator:SetHidden(true)
+  else
+    PXWritStatusAddonIndicator:SetHidden(false)
+  end
+
+  self.savedVariables.allWritsDoneNotified = false
+  self:CheckDefaultSettingsAreApplied()
+  self:CreateSettingsWindow()
+  self:RestorePosition()
+  self:UpdateWritStatus()
+end
+
 function PXWritStatusAddon.OnAddOnLoaded(event, addonName)
-  -- The event fires each time *any* addon loads - but we only care about when our own addon loads.
-  if addonName == PXWritStatusAddon.name then
+  if addonName == PXWritStatusAddon.Name then
     PXWritStatusAddon:Initialize()
   end
 end
-
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_CLOSE_BANK,                      function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_CRAFT_COMPLETED,                 function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_END_CRAFTING_STATION_INTERACT,   function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_EXPERIENCE_GAIN,                 function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_INVENTORY_FULL_UPDATE,           function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_ITEM_SLOT_CHANGED,               function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_LOOT_RECEIVED,                   function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_QUEST_ADDED,                     function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_QUEST_COMPLETE,                  function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_SKILL_XP_UPDATE,                 function() PXWritStatusAddon:GetJournal() end)
-EVENT_MANAGER:RegisterForEvent('PXWritStatus', EVENT_SMITHING_TRAIT_RESEARCH_STARTED, function() PXWritStatusAddon:GetJournal() end)
 
 function PXWritStatusAddon.OnIndicatorMoveStop()
   PXWritStatusAddon.savedVariables.left = PXWritStatusAddonIndicator:GetLeft()
   PXWritStatusAddon.savedVariables.top = PXWritStatusAddonIndicator:GetTop()
 end
 
--- Finally, we'll register our event handler function to be called when the proper event occurs.
-EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.name, EVENT_ADD_ON_LOADED, PXWritStatusAddon.OnAddOnLoaded)
+EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_ADD_ON_LOADED, PXWritStatusAddon.OnAddOnLoaded)
 
 ---------------------------------------------------------------------------------------------------------
 -- H E L P E R    F U N C T I O N S
 ---------------------------------------------------------------------------------------------------------
-function PXWritStatusAddon:GetJournal()
+function PXWritStatusAddon:UpdateWritStatus()
   local journal = {}
   local journalInfo = {}
   local text = ""
   local completedText = ""
   local conditionText = ""
+
+  PXWritStatusAddon.WritStatus.BlackSmithing = false
+  PXWritStatusAddon.WritStatus.BlackSmithingColor = PXWritStatusAddon.ColorRed 
+  PXWritStatusAddon.WritStatus.BlackSmithingPickedUp = false
+  PXWritStatusAddon.WritStatus.Clothing = false
+  PXWritStatusAddon.WritStatus.ClothingColor = PXWritStatusAddon.ColorRed 
+  PXWritStatusAddon.WritStatus.ClothingPickedUp = false
+  PXWritStatusAddon.WritStatus.Woodworking = false
+  PXWritStatusAddon.WritStatus.WoodworkingColor = PXWritStatusAddon.ColorRed 
+  PXWritStatusAddon.WritStatus.WoodworkingPickedUp = false
+  PXWritStatusAddon.WritStatus.Alchemy = false
+  PXWritStatusAddon.WritStatus.AlchemyColor = PXWritStatusAddon.ColorRed 
+  PXWritStatusAddon.WritStatus.AlchemyickedUp = false
+  PXWritStatusAddon.WritStatus.Enchanting = false
+  PXWritStatusAddon.WritStatus.EnchantingColor = PXWritStatusAddon.ColorRed 
+  PXWritStatusAddon.WritStatus.EnchantingPickedUp = false
+  PXWritStatusAddon.WritStatus.Provisioning = false
+  PXWritStatusAddon.WritStatus.ProvisioningColor = PXWritStatusAddon.ColorRed 
+  PXWritStatusAddon.WritStatus.ProvisioningPickedUp = false
 
   local questCount = GetNumJournalQuests()
   for questIndex = 1, questCount do
@@ -61,40 +137,73 @@ function PXWritStatusAddon:GetJournal()
       journalInfo.Pushed, journalInfo.QuestType, journalInfo.InstanceDisplayType = GetJournalQuestInfo(questIndex)
 
       local questComplete = GetJournalQuestIsComplete(questIndex)
-
       if journalInfo.QuestType == QUEST_TYPE_CRAFTING and
          journalInfo.RepeatType == QUEST_REPEAT_DAILY then
-        table.insert(journal, journalInfo)
 
         local steps = GetJournalQuestNumSteps(questIndex)
-        stepText, stepVisibility, stepType, stepTrackerOverrideText, conditions = GetJournalQuestStepInfo(questIndex, steps)
+        local writCompleted = false
+        for z = 1, steps do
+          local stepText, stepVisibility, stepType, stepTrackerOverrideText, conditions = GetJournalQuestStepInfo(questIndex, steps)
+          for zz = 1, conditions do
+            conditionText, current, max, isFailCondition, isComplete, isCreditShared, isVisible = GetJournalQuestConditionInfo(questIndex, z, zz)
+            local subText = string.sub(conditionText, 1, 7)
+            if subText == GetString(PXIP_WRITS_DELIVER) then
+              writCompleted = true
+            end
+          end
+        end
 
-        for conditionIndex = 1, conditions do
-          conditionText, current, max, isFailCondition, isComplete, isCreditShared, isVisible = GetJournalQuestConditionInfo(questIndex, steps, conditionIndex)
-          local subText = string.sub(conditionText, 1, 7)
-          if subText == "Deliver" then
-            completedText = "Completed"
+        if writCompleted == true then
+          completedText = GetString(PXIP_WRITS_COMPLETED)
+
+          if (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_BLACKSMITHING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.BlackSmithing = true
+            PXWritStatusAddon.WritStatus.BlackSmithingColor = PXWritStatusAddon.ColorGreen
+            PXWritStatusAddon.WritStatus.BlackSmithingPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_CLOTHING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.Clothing = true
+            PXWritStatusAddon.WritStatus.ClothingColor = PXWritStatusAddon.ColorGreen
+            PXWritStatusAddon.WritStatus.ClothingPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_WOODWORKING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.Woodworking = true
+            PXWritStatusAddon.WritStatus.WoodworkingColor = PXWritStatusAddon.ColorGreen
+            PXWritStatusAddon.WritStatus.WoodworkingPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ALCHEMY_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.Alchemy = true
+            PXWritStatusAddon.WritStatus.AlchemyColor = PXWritStatusAddon.ColorGreen
+            PXWritStatusAddon.WritStatus.AlchemyPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ENCHANTING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.Enchanting = true
+            PXWritStatusAddon.WritStatus.EnchantingColor = PXWritStatusAddon.ColorGreen
+            PXWritStatusAddon.WritStatus.EnchantingPickedUp = true
+          elseif(string.match(journalInfo.QuestName, GetString(PXIP_WRITS_PROVISIONING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.Provisioning = true
+            PXWritStatusAddon.WritStatus.ProvisioningColor = PXWritStatusAddon.ColorGreen
+            PXWritStatusAddon.WritStatus.ProvisioningPickedUp = true
+          end
+        else
+          if (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_BLACKSMITHING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.BlackSmithingPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_CLOTHING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.ClothingPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_WOODWORKING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.WoodworkingPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ALCHEMY_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.AlchemyPickedUp = true
+          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ENCHANTING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.EnchantingPickedUp = true
+          elseif(string.match(journalInfo.QuestName, GetString(PXIP_WRITS_PROVISIONING_SUBSTRING))) then
+            PXWritStatusAddon.WritStatus.ProvisioningPickedUp = true
           end
         end
         text = text .. journalInfo.QuestName .. " -- " .. completedText .. "\n"
         completedText = ""
       end
-      local compl = "No"
-      if journalInfo.Completed == true then
-        compl = "Yes"
-      end
     end
   end
+
+  PXWritStatusAddon.WritStatusText = text
   PXWritStatusAddon:WriteLog(text)
-  return journal
-end
-
-function PXWritStatusAddon:Initialize()
-  self.savedVariables = ZO_SavedVars:New("PXWritStatusSavedVariables", 4, nil, {})
-  self.accountVariables = ZO_SavedVars:NewAccountWide("PXWritStatusAccountVariables", 4, nil, {})
-
-  local journal = PXWritStatusAddon:GetJournal()
-  self:RestorePosition()
 end
 
 function PXWritStatusAddon:RestorePosition()
@@ -115,12 +224,23 @@ function PXWritStatusAddon:Round(num, idp)
 end
 
 function PXWritStatusAddon:WriteLog(textLog)
-  local date = GetDate()
-  local time = GetTimeString()
+  if self.savedVariables.fontScale ~= nil then
+    PXWritStatusAddonIndicatorLabel:SetScale(self.savedVariables.fontScale)
+  end
+  if self.savedVariables.fontColor ~= nil then
+    PXWritStatusAddonIndicatorLabel:SetColor(self.savedVariables.fontColor.r, self.savedVariables.fontColor.g, self.savedVariables.fontColor.b)
+  end
+  PXWritStatusAddonIndicatorBG:SetAlpha(self.savedVariables.transparency)
+
+  PXWritStatusAddonIndicatorLabel:SetText(text)
+
+  local x = PXWritStatusAddonIndicatorLabel:GetWidth()
+  local y = PXWritStatusAddonIndicatorLabel:GetHeight()
+  PXWritStatusAddonIndicator:SetDimensions(x + 15, y + 15)
 
   if textLog == "" then
     PXWritStatusAddonIndicatorLabel:SetText("")
   else
-    PXWritStatusAddonIndicatorLabel:SetText(date .. " " .. time .. "\n" .. textLog)
+    PXWritStatusAddonIndicatorLabel:SetText(textLog)
   end
 end
