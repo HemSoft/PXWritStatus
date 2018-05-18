@@ -1,6 +1,6 @@
 PXWritStatusAddon = {
   Name = "PXWritStatus",
-  Version = "1.0.0",
+  Version = "1.0.1",
   WritStatusText = '',
 
   DefaultSettings = {
@@ -142,9 +142,9 @@ function PXWritStatusAddon:UpdateWritStatus()
 
         local steps = GetJournalQuestNumSteps(questIndex)
         local writCompleted = false
-        for z = 1, steps do
-          local stepText, stepVisibility, stepType, stepTrackerOverrideText, conditions = GetJournalQuestStepInfo(questIndex, steps)
-          for zz = 1, conditions do
+        for z = 0, steps + 1 do
+          local stepText, stepVisibility, stepType, stepTrackerOverrideText, conditions = GetJournalQuestStepInfo(questIndex, z)
+          for zz = 0, conditions + 1 do
             conditionText, current, max, isFailCondition, isComplete, isCreditShared, isVisible = GetJournalQuestConditionInfo(questIndex, z, zz)
             local subText = string.sub(conditionText, 1, 7)
             if subText == GetString(PXIP_WRITS_DELIVER) then

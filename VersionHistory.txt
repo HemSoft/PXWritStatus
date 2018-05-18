@@ -1,2 +1,5 @@
+V1.0.1
+- Fixed another bug in the part of the code that determines if writs are done or not. Hopefully that is the last of the bugs that surfaced for Provisioning bugs!
+
 V1.0.0
 - Revived PXWritStatus and it is compatible with Summerset.
