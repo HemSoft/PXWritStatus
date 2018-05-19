@@ -1,6 +1,6 @@
 PXWritStatusAddon = {
   Name = "PXWritStatus",
-  Version = "1.0.1",
+  Version = "1.0.2",
   WritStatusText = '',
 
   DefaultSettings = {
@@ -68,7 +68,6 @@ function PXWritStatusAddon:Initialize()
   EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_SKILL_XP_UPDATE,                 function() PXWritStatusAddon:UpdateWritStatus() end)
   EVENT_MANAGER:RegisterForEvent(PXWritStatusAddon.Name, EVENT_SMITHING_TRAIT_RESEARCH_STARTED, function() PXWritStatusAddon:UpdateWritStatus() end)
 
-  d('PXWS -- PXWritStatusAddon:Initialize()')
   self.savedVariables = ZO_SavedVars:New("PXWritStatusSavedVariables", 4, nil, {})
   self:RestorePosition()
 
@@ -147,52 +146,52 @@ function PXWritStatusAddon:UpdateWritStatus()
           for zz = 0, conditions + 1 do
             conditionText, current, max, isFailCondition, isComplete, isCreditShared, isVisible = GetJournalQuestConditionInfo(questIndex, z, zz)
             local subText = string.sub(conditionText, 1, 7)
-            if subText == GetString(PXIP_WRITS_DELIVER) then
+            if subText == GetString(PXWS_WRITS_DELIVER) then
               writCompleted = true
             end
           end
         end
 
         if writCompleted == true then
-          completedText = GetString(PXIP_WRITS_COMPLETED)
+          completedText = GetString(PXWS_WRITS_COMPLETED)
 
-          if (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_BLACKSMITHING_SUBSTRING))) then
+          if (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_BLACKSMITHING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.BlackSmithing = true
             PXWritStatusAddon.WritStatus.BlackSmithingColor = PXWritStatusAddon.ColorGreen
             PXWritStatusAddon.WritStatus.BlackSmithingPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_CLOTHING_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_CLOTHING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.Clothing = true
             PXWritStatusAddon.WritStatus.ClothingColor = PXWritStatusAddon.ColorGreen
             PXWritStatusAddon.WritStatus.ClothingPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_WOODWORKING_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_WOODWORKING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.Woodworking = true
             PXWritStatusAddon.WritStatus.WoodworkingColor = PXWritStatusAddon.ColorGreen
             PXWritStatusAddon.WritStatus.WoodworkingPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ALCHEMY_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_ALCHEMY_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.Alchemy = true
             PXWritStatusAddon.WritStatus.AlchemyColor = PXWritStatusAddon.ColorGreen
             PXWritStatusAddon.WritStatus.AlchemyPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ENCHANTING_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_ENCHANTING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.Enchanting = true
             PXWritStatusAddon.WritStatus.EnchantingColor = PXWritStatusAddon.ColorGreen
             PXWritStatusAddon.WritStatus.EnchantingPickedUp = true
-          elseif(string.match(journalInfo.QuestName, GetString(PXIP_WRITS_PROVISIONING_SUBSTRING))) then
+          elseif(string.match(journalInfo.QuestName, GetString(PXWS_WRITS_PROVISIONING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.Provisioning = true
             PXWritStatusAddon.WritStatus.ProvisioningColor = PXWritStatusAddon.ColorGreen
             PXWritStatusAddon.WritStatus.ProvisioningPickedUp = true
           end
         else
-          if (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_BLACKSMITHING_SUBSTRING))) then
+          if (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_BLACKSMITHING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.BlackSmithingPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_CLOTHING_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_CLOTHING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.ClothingPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_WOODWORKING_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_WOODWORKING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.WoodworkingPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ALCHEMY_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_ALCHEMY_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.AlchemyPickedUp = true
-          elseif (string.match(journalInfo.QuestName, GetString(PXIP_WRITS_ENCHANTING_SUBSTRING))) then
+          elseif (string.match(journalInfo.QuestName, GetString(PXWS_WRITS_ENCHANTING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.EnchantingPickedUp = true
-          elseif(string.match(journalInfo.QuestName, GetString(PXIP_WRITS_PROVISIONING_SUBSTRING))) then
+          elseif(string.match(journalInfo.QuestName, GetString(PXWS_WRITS_PROVISIONING_SUBSTRING))) then
             PXWritStatusAddon.WritStatus.ProvisioningPickedUp = true
           end
         end
@@ -231,8 +230,6 @@ function PXWritStatusAddon:WriteLog(textLog)
     PXWritStatusAddonIndicatorLabel:SetColor(self.savedVariables.fontColor.r, self.savedVariables.fontColor.g, self.savedVariables.fontColor.b)
   end
   PXWritStatusAddonIndicatorBG:SetAlpha(self.savedVariables.transparency)
-
-  PXWritStatusAddonIndicatorLabel:SetText(text)
 
   local x = PXWritStatusAddonIndicatorLabel:GetWidth()
   local y = PXWritStatusAddonIndicatorLabel:GetHeight()
