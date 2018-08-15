@@ -1,6 +1,6 @@
 PXWritStatusAddon = {
   Name = "PXWritStatus",
-  Version = "1.0.2",
+  Version = "1.0.3",
   WritStatusText = '',
 
   DefaultSettings = {
@@ -126,8 +126,7 @@ function PXWritStatusAddon:UpdateWritStatus()
   PXWritStatusAddon.WritStatus.ProvisioningColor = PXWritStatusAddon.ColorRed 
   PXWritStatusAddon.WritStatus.ProvisioningPickedUp = false
 
-  local questCount = GetNumJournalQuests()
-  for questIndex = 1, questCount do
+  for questIndex = 1, MAX_JOURNAL_QUESTS do
     journalInfo = {}
     if IsValidQuestIndex(questIndex) then
       journalInfo.RepeatType = GetJournalQuestRepeatType(questIndex)

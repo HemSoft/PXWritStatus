@@ -1,3 +1,6 @@
+V1.0.3
+- API bump for Wolfhunter.
+
 V1.0.2
 - Fixed problem with wrong language strings being referenced making it appear as if the addon was not registering writ completions.
 
