@@ -1,5 +1,9 @@
+V1.0.4
+- API bump for Wrathstone.
+
 V1.0.3
 - API bump for Wolfhunter.
+- Now correctly iterating quests, and as a result, writ display is now accurate on login, quest log full and upon delivery!
 
 V1.0.2
 - Fixed problem with wrong language strings being referenced making it appear as if the addon was not registering writ completions.
