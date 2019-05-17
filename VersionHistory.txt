@@ -1,4 +1,8 @@
-V1.0.4
+V1.0.5 -- 2019/05/17
+- API bump for Elsweyr
+- Made LibAddonMenu2 an external dependency you need to hvae this addon installed.
+
+V1.0.4 -- 2019/03/03
 - API bump for Wrathstone.
 
 V1.0.3
